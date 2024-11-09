@@ -1,7 +1,3 @@
-This edition of the book has been converted to LaTeX.
-In order to build it, ensure you have a TeX distribution that contains
-the `pdflatex` command. With that, you should be able to build the book
-by running `make`, which will clone the OS itself and build the book
-to `book.pdf` in the main directory.
+Esta edição do livro foi convertida para LaTeX. Para compilá-lo, certifique-se de ter uma distribuição TeX que contenha o comando `pdflatex`. Com isso, você deverá ser capaz de compilar o livro executando o comando `make`, que irá clonar o próprio sistema operacional e gerar o arquivo `book.pdf` no diretório principal.
 
-Figures are drawn using `inkscape`.
+As figuras são desenhadas usando o `Inkscape`.
