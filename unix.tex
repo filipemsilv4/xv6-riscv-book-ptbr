@@ -1,185 +1,181 @@
-\chapter{Operating system interfaces}
+\chapter{Interfaces do sistema operacional}
 \label{CH:UNIX}
 
-The job of an operating system is to share a computer among
-multiple programs and to provide a more useful set of services
-than the hardware alone supports.
-An operating system manages and abstracts
-the low-level hardware, so that, for example,
-a word processor need not concern itself with which type
-of disk hardware is being used.
-An operating system shares the hardware among multiple programs so
-that they run (or appear to run) at the same time.
-Finally, operating systems provide controlled ways for programs
-to interact, so that they can share data or work together.
+A tarefa de um sistema operacional é compartilhar um computador entre
+múltiplos programas e fornecer um conjunto de serviços mais úteis
+do que o hardware sozinho suporta.
+Um sistema operacional gerencia e abstrai
+o hardware de baixo nível, de modo que, por exemplo,
+um processador de texto não precise se preocupar com qual tipo
+de hardware de disco está sendo usado.
+Um sistema operacional compartilha o hardware entre vários programas para
+que eles sejam executados (ou pareçam ser executados) ao mesmo tempo.
+Finalmente, os sistemas operacionais fornecem maneiras controladas para os programas
+interagirem, para que possam compartilhar dados ou trabalhar juntos.
 
-An operating system provides services to user programs through an interface.
-\index{interface design}
-Designing a good interface turns out to be
-difficult.  On the one hand, we would like the interface to be
-simple and narrow because that makes it easier to get the
-implementation right.  On the other hand,
-we may be tempted to offer many sophisticated features to applications.
-The trick in
-resolving this tension is to design interfaces that rely on a few
-mechanisms that can be combined to provide much generality.
+Um sistema operacional fornece serviços aos programas do usuário por meio de uma interface.
+Projetar uma boa interface \index{interface design} acaba sendo
+difícil. Por um lado, gostaríamos que a interface fosse
+simples e restrita, porque isso torna mais fácil implementar corretamente.  Por outro lado,
+podemos ser tentados a oferecer muitos recursos sofisticados aos aplicativos.
+O truque para
+resolver essa tensão é projetar interfaces que dependem de poucos
+mecanismos que podem ser combinados para fornecer muita generalidade.
 
-This book uses a single operating system as a concrete example to
-illustrate operating system concepts.  That operating system,
-xv6, provides the basic interfaces introduced by Ken Thompson and
-Dennis Ritchie's Unix operating system~\cite{unix}, as well as mimicking Unix's
-internal design.  Unix provides a
-narrow interface whose mechanisms combine well, offering a surprising
-degree of generality.  This interface has been so successful that
-modern operating systems—BSD, Linux, macOS, Solaris, and even, to a
-lesser extent, Microsoft Windows—have Unix-like interfaces.
-Understanding xv6 is a good start toward understanding any of these
-systems and many others.
+Este livro usa um único sistema operacional como um exemplo concreto para
+ilustrar os conceitos de sistema operacional.  Esse sistema operacional,
+xv6, fornece as interfaces básicas introduzidas pelo sistema operacional Unix de Ken Thompson e
+Dennis Ritchie~\cite{unix}, bem como imita o
+projeto interno do Unix.  O Unix fornece uma
+interface restrita cujos mecanismos se combinam bem, oferecendo um grau surpreendente de
+generalidade.  Esta interface tem sido tão bem-sucedida que
+sistemas operacionais modernos—BSD, Linux, macOS, Solaris e até, em
+menor grau, Microsoft Windows—têm interfaces semelhantes ao Unix.
+Entender o xv6 é um bom começo para entender qualquer um desses
+sistemas e muitos outros.
 
-As 
-Figure~\ref{fig:os} shows,
-xv6 takes the traditional form of a
-\indextext{kernel},
-a special program that provides
-services to running programs.
-Each running program, called a
-\indextext{process},
-has memory containing instructions, data, and a stack. The
-instructions implement the
-program's computation.  The data are the variables on which
-the computation acts. The stack organizes the program's procedure calls.
-A given computer typically has many processes but only a single
-kernel.
+Como
+mostra a Figura~\ref{fig:os},
+o xv6 assume a forma tradicional de um
+\indextext{núcleo (kernel)},
+um programa especial que fornece
+serviços para programas em execução.
+Cada programa em execução, chamado de
+\indextext{processo (process)},
+tem memória contendo instruções, dados e uma pilha. As
+instruções implementam a
+computação do programa.  Os dados são as variáveis sobre as quais
+a computação atua. A pilha organiza as chamadas de função do programa.
+Um determinado computador normalmente tem muitos processos, mas apenas um único
+núcleo.
 
-When a
-process needs to invoke a kernel service, it invokes 
-a \indextext{system call},
-one of the calls
-in the operating system's interface.
-The system call enters the kernel;
-the kernel performs the service and returns.
-Thus a process alternates between executing in
-\indextext{user space}
-and
-\indextext{kernel space}.
+Quando um
+processo precisa invocar um serviço do núcleo, ele invoca
+uma \indextext{chamada de sistema (system call)},
+uma das chamadas
+na interface do sistema operacional.
+A chamada de sistema entra no núcleo;
+o núcleo executa o serviço e retorna.
+Assim, um processo alterna entre a execução no
+\indextext{espaço do usuário (user space)}
+e
+\indextext{espaço do núcleo (kernel space)}.
 
-As described in detail in subsequent chapters, the kernel uses the hardware protection mechanisms provided by a
+Conforme descrito em detalhes nos capítulos subsequentes, o núcleo usa os mecanismos de proteção de hardware fornecidos por uma
 CPU\footnote{
-This text generally refers to the hardware element that executes a
-computation with the term \indextext{CPU}, an acronym for central
-processing unit.  Other documentation (e.g., the RISC-V specification)
-also uses the words processor, core, and hart instead of CPU.
+Este texto geralmente se refere ao elemento de hardware que executa um
+cálculo com o termo \indextext{CPU}, uma sigla para unidade central de
+processamento.  Outra documentação (por exemplo, a especificação RISC-V)
+também usa as palavras processador, núcleo e hart em vez de CPU.
 }
-to
-ensure that each process executing in user space can access only
-its own memory.
-The kernel executes with the hardware privileges required to
-implement these protections; user programs execute without
-those privileges.
-When a user program invokes a system call, the hardware
-raises the privilege level and starts executing a pre-arranged
-function in the kernel.
+para
+garantir que cada processo em execução no espaço do usuário possa acessar apenas
+sua própria memória.
+O núcleo é executado com os privilégios de hardware necessários para
+implementar essas proteções; programas de usuário são executados sem
+esses privilégios.
+Quando um programa de usuário invoca uma chamada de sistema, o hardware
+eleva o nível de privilégio e começa a executar uma
+função pré-definida no núcleo.
 
 \begin{figure}[t]
 \center
 \includegraphics[scale=0.5]{fig/os.pdf}
-\caption{A kernel and two user processes.}
+\caption{Um núcleo e dois processos de usuário.}
 \label{fig:os}
 \end{figure}
 
-The collection of system calls that a kernel provides
-is the interface that user programs see.
-The xv6 kernel provides a subset of the services and system calls
-that Unix kernels traditionally offer.  
-Figure~\ref{fig:api} 
-lists all of xv6's system calls.
+O conjunto de chamadas de sistema que um núcleo fornece
+é a interface que os programas do usuário veem.
+O núcleo xv6 fornece um subconjunto dos serviços e chamadas de sistema
+que os núcleos Unix tradicionalmente oferecem. A
+Figura~\ref{fig:api}
+lista todas as chamadas de sistema do xv6.
 
-The rest of this chapter outlines xv6's services---processes, memory,
-file descriptors, pipes, and a file system---and illustrates them with
-code snippets and discussions of how the \indextext{shell}, 
-Unix's command-line user interface, uses
-them. The shell's use of system calls illustrates how carefully they
-have been designed.
+O restante deste capítulo descreve os serviços do xv6 --- processos, memória,
+descritores de arquivos, pipes e um sistema de arquivos --- e os ilustra com
+trechos de código e discussões sobre como o \indextext{shell},
+a interface de linha de comando do Unix, os usa.
+O uso de chamadas de sistema pelo shell ilustra como elas foram cuidadosamente
+projetadas.
 
-The shell is an ordinary program that reads commands from the user
-and executes them.
-The fact that the shell is a user program, and not part of the kernel,
-illustrates the power of the system call interface: there is nothing
-special about the shell.
-It also means that the shell is easy to replace; as a result,
-modern Unix systems have a variety of
-shells to choose from, each with its own user interface
-and scripting features.
-The xv6 shell is a simple implementation of the essence of
-the Unix Bourne shell.  Its implementation can be found at 
+O shell é um programa comum que lê comandos do usuário
+e os executa.
+O fato de o shell ser um programa de usuário, e não parte do núcleo,
+ilustra o poder da interface de chamada de sistema: não há nada
+de especial no shell.
+Também significa que o shell é fácil de substituir; como resultado,
+os sistemas Unix modernos têm uma variedade de
+shells para escolher, cada um com sua própria interface de usuário
+e recursos de script.
+O shell xv6 é uma implementação simples da essência do
+Bourne shell do Unix.  Sua implementação pode ser encontrada em
 \lineref{user/sh.c:1}.
-%% 
-%% 	Processes and memory
-%% 
-\section{Processes and memory}
+%%
+%% 	Processos e memória
+%%
+\section{Processos e memória}
 
-An xv6 process consists of user-space memory (instructions, data, and stack)
-and per-process state private to the kernel.
-Xv6 
-\indextext{time-share}s
-processes: it transparently switches the available CPUs
-among the set of processes waiting to execute.
-When a process is not executing, xv6 saves the process's CPU registers,
-restoring them when it next runs the process.
-The kernel associates a process identifier, or
+Um processo xv6 consiste em memória de espaço do usuário (instruções, dados e pilha)
+e estado por processo privado para o núcleo.
+Xv6 \indextext{divide o tempo (time-shares)} entre os processos: ele alterna de forma transparente as CPUs disponíveis
+entre o conjunto de processos aguardando execução.
+Quando um processo não está em execução, o xv6 salva os registradores da CPU do processo,
+restaurando-os na próxima vez que executa o processo.
+O núcleo associa um identificador de processo, ou
 \indexcode{PID},
-with each process.
+com cada processo.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \center
-\begin{tabular}{ll}
-{\bf System call} & {\bf Description} \\
+\small
+\begin{tabular}{p{4cm} p{10cm}} % Defina a largura de cada coluna conforme necessário
+{\bf Chamada de Sistema (System call)} & {\bf Descrição} \\
 \midrule
-int fork() & Create a process, return child's PID. \\
-int exit(int status) & Terminate the current process; status reported to wait(). No return. \\
-int wait(int *status) & Wait for a child to exit; exit status in *status; returns child PID. \\
-int kill(int pid) & Terminate process PID. Returns 0, or -1 for error. \\
-int getpid() & Return the current process's PID. \\
-int sleep(int n) & Pause for n clock ticks. \\
-int exec(char *file, char *argv[]) & Load a file and execute it with arguments; only returns if error. \\
-char *sbrk(int n) & Grow process's memory by n zero bytes. Returns start of new memory. \\
-int open(char *file, int flags) & Open a file; flags indicate read/write; returns an fd (file descriptor). \\
-int write(int fd, char *buf, int n) & Write n bytes from buf to file descriptor fd; returns n. \\
-int read(int fd, char *buf, int n) & Read n bytes into buf; returns number read; or 0 if end of file. \\
-int close(int fd) & Release open file fd. \\
-int dup(int fd) & Return a new file descriptor referring to the same file as fd.\\
-int pipe(int p[]) & Create a pipe, put read/write file descriptors in p[0] and p[1]. \\
-int chdir(char *dir) & Change the current directory. \\
-int mkdir(char *dir) & Create a new directory. \\
-int mknod(char *file, int, int) & Create a device file. \\
-int fstat(int fd, struct stat *st) & Place info about an open file into *st. \\
-int link(char *file1, char *file2) & Create another name (file2) for the file file1. \\
-int unlink(char *file) & Remove a file. \\
+int fork() & Cria um processo, retorna o PID do filho. \\
+int exit(int status) & Encerra o processo atual; status reportado para wait(). Sem retorno. \\
+int wait(int *status) & Aguarda um filho encerrar; status de saída colocado em *status; retorna o PID do filho. \\
+int kill(int pid) & Encerra o processo PID. Retorna 0, ou -1 para erro. \\
+int getpid() & Retorna o PID do processo atual. \\
+int sleep(int n) & Pausa por n pulsos de clock. \\
+int exec(char *file, char *argv[]) & Carrega um arquivo e o executa com argumentos; retorna apenas se houver erro. \\
+char *sbrk(int n) & Aumenta a memória do processo em n bytes zero. Retorna o início da nova memória. \\
+int open(char *file, int flags) & Abre um arquivo; flags indicam leitura/gravação; retorna um fd (descritor de arquivo). \\
+int write(int fd, char *buf, int n) & Grava n bytes de buf para o descritor de arquivo fd; retorna n. \\
+int read(int fd, char *buf, int n) & Lê n bytes em buf; retorna o número lido; ou 0 se for o final do arquivo. \\
+int close(int fd) & Libera o arquivo aberto fd. \\
+int dup(int fd) & Retorna um novo descritor de arquivo referindo-se ao mesmo arquivo que fd. \\
+int pipe(int p[]) & Cria um pipe, coloca os descritores de arquivo de leitura/gravação em p[0] e p[1]. \\
+int chdir(char *dir) & Altera o diretório atual. \\
+int mkdir(char *dir) & Cria um novo diretório. \\
+int mknod(char *file, int, int) & Cria um arquivo de dispositivo. \\
+int fstat(int fd, struct stat *st) & Coloca informações sobre um arquivo aberto em *st. \\
+int link(char *file1, char *file2) & Cria outro nome (file2) para o arquivo file1. \\
+int unlink(char *file) & Remove um arquivo. \\
 \end{tabular}
-\caption{Xv6 system calls. If not otherwise stated, these calls return
-0 for no error, and -1 if there's an error.}
+\normalsize
+\caption{Chamadas de sistema do Xv6. Se não declarado de outra forma, essas chamadas retornam
+0 para nenhum erro e -1 se houver um erro.}
 \label{fig:api}
 \end{figure}
 
-A process may create a new process using the
-\indexcode{fork}
-system call.
+Um processo pode criar um novo processo usando a
+chamada de sistema \indexcode{fork}.
 \lstinline{fork}
-gives the new process an exact copy of the calling
-process's memory: it copies the instructions, data, and
-stack of the calling process into the new process's memory.
+fornece ao novo processo uma cópia exata da memória do processo
+chamador: ele copia as instruções, os dados e
+a pilha do processo chamador para a memória do novo processo.
 \lstinline{fork}
-returns in both the original and new processes.
-In the original process, \lstinline{fork} returns the new process's
-PID.
-In the new process, \lstinline{fork} returns zero.
-The original and new processes are often called the
-\indextext{parent}
-and
-\indextext{child}.
+retorna tanto no processo original quanto no novo.
+No processo original, \lstinline{fork} retorna o PID do novo processo.
+No novo processo, \lstinline{fork} retorna zero.
+Os processos original e novo são frequentemente chamados de
+\indextext{pai (parent)}
+e
+\indextext{filho (child)}.
 
-For example, consider the following program fragment written in the C
-programming language~\cite{kernighan}:
+Por exemplo, considere o seguinte fragmento de programa escrito na linguagem de programação C
+~\cite{kernighan}:
 \begin{lstlisting}[]
 int pid = fork();
 if(pid > 0){
@@ -193,75 +189,72 @@ if(pid > 0){
   printf("fork error\n");
 }
 \end{lstlisting}
-The
-\indexcode{exit}
-system call causes the calling process to stop executing and
-to release resources such as memory and open files.
-Exit takes an integer status argument,
-conventionally 0 to indicate success and 1 to indicate failure.
-The
+A
+chamada de sistema \indexcode{exit}
+faz com que o processo que a chamou pare de executar e
+libere recursos como memória e arquivos abertos.
+\lstinline{exit} recebe um argumento de status inteiro,
+convencionalmente 0 para indicar sucesso e 1 para indicar falha.
+A
+chamada de sistema \indexcode{wait}
+retorna o PID de um filho encerrado (ou finalizado) do
+processo atual e copia o status de saída do filho para o endereço
+passado para \lstinline{wait}; se nenhum dos filhos do chamador
+tiver encerrado,
 \indexcode{wait}
-system call returns the PID of an exited (or killed) child of the
-current process and copies the exit status of the child to the address
-passed to wait; if none of the caller's children
-has exited,
-\indexcode{wait}
-waits for one to do so.
-If the caller has no children, \lstinline{wait} immediately
-returns -1.
-If the parent doesn't care about the exit status of a child, it can
-pass a 0 address to
+espera que um o faça.
+Se o chamador não tiver filhos, \lstinline{wait} retorna imediatamente -1.
+Se o pai não se importar com o status de saída de um filho, ele pode
+passar um endereço 0 para
 \lstinline{wait}.
 
-In the example, the output lines
+No exemplo, as linhas de saída
 \begin{lstlisting}[]
 parent: child=1234
 child: exiting
 \end{lstlisting}
-might come out in either order (or even intermixed), depending on whether the
-parent or child gets to its
-\indexcode{printf}
-call first.
-After the child exits, the parent's
-\indexcode{wait}
-returns, causing the parent to print
+podem sair em qualquer ordem (ou até mesmo intercaladas), dependendo se o
+pai ou o filho chega à sua
+chamada \indexcode{printf}
+primeiro.
+Após o filho encerrar, o \indexcode{wait} do pai
+retorna, fazendo com que o pai imprima
 \begin{lstlisting}[]
 parent: child 1234 is done
 \end{lstlisting}
-Although the child has the same memory contents as the parent initially, the
-parent and child are executing with separate memory and separate registers:
-changing a variable in one does not affect the other. For example, when the
-return value of
+Embora o filho tenha o mesmo conteúdo de memória que o pai inicialmente, o
+pai e o filho estão executando com memória separada e registradores separados:
+alterar uma variável em um não afeta o outro. Por exemplo, quando o
+valor de retorno de
 \lstinline{wait}
-is stored into
-\lstinline{pid} 
-in the parent process,
-it doesn't change the variable 
+é armazenado em
 \lstinline{pid}
-in the child.  The value of
+no processo pai,
+ele não altera a variável
 \lstinline{pid}
-in the child will still be zero.
+no filho.  O valor de
+\lstinline{pid}
+no filho ainda será zero.
 
-The
+A
+chamada de sistema \indexcode{exec}
+substitui a memória do processo que a chamou por uma nova imagem de memória
+carregada de um arquivo armazenado no sistema de arquivos.
+O arquivo deve ter um formato específico, que especifica qual parte do
+arquivo contém instruções, qual parte são dados, em qual instrução
+iniciar, etc. O Xv6
+usa o formato ELF, que o Capítulo~\ref{CH:MEM} discute em
+mais detalhes.
+Normalmente, o arquivo é o resultado da compilação do código-fonte de um programa.
+Quando
 \indexcode{exec}
-system call
-replaces the calling process's memory with a new memory
-image loaded from a file stored in the file system.
-The file must have a particular format, which specifies which part of
-the file holds instructions, which part is data, at which instruction
-to start, etc. Xv6
-uses the ELF format, which Chapter~\ref{CH:MEM} discusses in
-more detail.
-Usually the file is the result of compiling a program's source code.
-When
-\indexcode{exec}
-succeeds, it does not return to the calling program;
-instead, the instructions loaded from the file start
-executing at the entry point declared in the ELF header.
+é bem-sucedido, ele não retorna ao programa de chamada;
+em vez disso, as instruções carregadas do arquivo iniciam
+a execução no ponto de entrada declarado no cabeçalho ELF.
 \lstinline{exec}
-takes two arguments: the name of the file containing the
-executable and an array of string arguments.
-For example:
+recebe dois argumentos: o nome do arquivo que contém o
+executável e uma array de strings de argumentos.
+Por exemplo:
 \begin{lstlisting}[]
 char *argv[3];
 
@@ -271,87 +264,86 @@ argv[2] = 0;
 exec("/bin/echo", argv);
 printf("exec error\n");
 \end{lstlisting}
-This fragment replaces the calling program with an instance
-of the program 
+Este fragmento substitui o programa de chamada por uma instância
+do programa
 \lstinline{/bin/echo}
-running with the argument list
+executando com a lista de argumentos
 \lstinline{echo}
 \lstinline{hello}.
-Most programs ignore the first element of the argument array, which is 
-conventionally the name of the program.
+A maioria dos programas ignora o primeiro elemento da array de argumentos, que é
+convencionalmente o nome do programa.
 
-The xv6 shell uses the above calls to run programs on behalf of
-users. The main structure of the shell is simple; see
-\lstinline{main} 
+A shell do xv6 utiliza as chamadas mencionadas acima para executar programas para
+os usuários. A estrutura principal do shell é simples; veja
+\lstinline{main}
 \lineref{user/sh.c:/main/}.
-The main loop reads a line of input from the user with
+O loop principal lê uma linha de entrada do usuário com
 \indexcode{getcmd}.
-Then it calls 
-\lstinline{fork}, 
-which creates a copy of the shell process. The
-parent calls
+Então, ele chama
+\lstinline{fork},
+que cria uma cópia do processo do shell. O
+pai chama
 \lstinline{wait},
-while the child runs the command.  For example, if the user
-had typed
+enquanto o filho executa o comando.  Por exemplo, se o usuário
+tivesse digitado
 ``\lstinline{echo hello}''
-to the shell,
+para o shell,
 \lstinline{runcmd}
-would have been called with
+teria sido chamado com
 ``\lstinline{echo hello}''
-as the argument.
-\lstinline{runcmd} 
+como argumento.
+\lstinline{runcmd}
 \lineref{user/sh.c:/runcmd/}
-runs the actual command. For
+executa o comando real. Para
 ``\lstinline{echo hello}'',
-it would call
-\lstinline{exec} 
-\lineref{user/sh.c:/exec.ecmd/}.
-If
+ele chamaria
 \lstinline{exec}
-succeeds then the child will execute instructions from
+\lineref{user/sh.c:/exec.ecmd/}.
+Se
+\lstinline{exec}
+for bem-sucedido, o filho executará as instruções de
 \lstinline{echo}
-instead of
-\lstinline{runcmd}.  
-At some point
+em vez de
+\lstinline{runcmd}.  Em algum ponto
 \lstinline{echo}
-will call
+chamará
 \lstinline{exit},
-which will cause the parent to return from
+o que fará com que o pai retorne de
 \lstinline{wait}
-in 
+em
 \lstinline{main}
 \lineref{user/sh.c:/main/}.
 
-You might wonder why
-\indexcode{fork}
-and
-\indexcode{exec}
-are not combined in a single call; we will see later that 
-the shell exploits the separation in its implementation of
-I/O redirection.
-To avoid the wastefulness of
-creating a duplicate process and then immediately replacing it (with \lstinline{exec}),
-operating kernels optimize the implementation of
-\lstinline{fork}
-for this use case by using virtual memory techniques such as
-copy-on-write (see Section~\ref{sec:pagefaults}).
 
-Xv6 allocates most user-space memory
-implicitly:
+Você pode se perguntar por que
 \indexcode{fork}
-allocates the memory required for the child's copy of the
-parent's memory, and 
+e
 \indexcode{exec}
-allocates enough memory to hold the executable file.
-A process that needs more memory at run-time (perhaps for
+não são combinados em uma única chamada; veremos mais tarde que
+o shell explora a separação em sua implementação de
+redirecionamento de E/S.
+Para evitar o desperdício de
+criar um processo duplicado e substituí-lo imediatamente (com \lstinline{exec}),
+os núcleos do sistema operacional otimizam a implementação de
+\lstinline{fork}
+para este caso de uso usando técnicas de memória virtual como
+cópia na gravação (copy-on-write) (consulte a Seção~\ref{sec:pagefaults}).
+
+Xv6 aloca a maior parte da memória do espaço do usuário
+implicitamente:
+\indexcode{fork}
+aloca a memória necessária para a cópia do filho da
+memória do pai, e
+\indexcode{exec}
+aloca memória suficiente para armazenar o arquivo executável.
+Um processo que precisa de mais memória em tempo de execução (talvez para
 \indexcode{malloc})
-can call
+pode chamar
 \lstinline{sbrk(n)}
-to grow its data memory by
-\lstinline{n} zero
-bytes;
+para aumentar sua memória de dados em
+\lstinline{n} bytes zero;
 \indexcode{sbrk}
-returns the location of the new memory.
+retorna a localização da nova memória.
 
 %% 
 %% 	I/O and File descriptors
